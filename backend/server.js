@@ -13,8 +13,12 @@ app.use(express.json())
 
 io.on("connection", (socket) => {
     console.log('socket connected : ', socket.id);
+
+    socket.on("join", (username) => {
+        console.log(`username associated with current socket : ${username}`);
+    })
 })
 
-app.listen(port, () => {
+server.listen(port, () => {
     console.log('server live at ', port);
 })

@@ -1,7 +1,5 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import { socket } from "./utils/socket"
 import './App.css'
 
 function App() {
@@ -10,6 +8,7 @@ function App() {
   let joinUser = () => {
     console.log(username)
     setUsername('')
+    socket.emit("join", username)
   }
 
   return (
