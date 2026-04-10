@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { socket } from "./utils/socket"
+import { IoCall } from "react-icons/io5";
 import './App.css'
 
 function App() {
   const [username, setUsername] = useState('')
+  const [currentUsername, setCurrentUsername] = useState('')
   const [onlineUsers, SetOnlineUsers] = useState([])
   const [selectedUser, setSelectedUser] = useState('')
 
@@ -19,6 +21,7 @@ function App() {
     socket.on("disconnect", () => {
       setSelectedUser('')
       setUsername('')
+      setCurrentUsername('')
     })
     return () => {
       socket.off("success")
@@ -28,7 +31,7 @@ function App() {
   }, [])
 
   let joinUser = () => {
-    console.log(username)
+    setCurrentUsername(username)
     setUsername('')
     socket.emit("join", username)
   }
@@ -36,6 +39,13 @@ function App() {
   let leaveUser = () => {
     socket.emit("leave")
     setSelectedUser('')
+    setCurrentUsername('')
+  }
+
+  let sendCallOffer = (targetUser) => {
+    console.log("sendCallOffer triggered")
+    console.log(`From : ${currentUsername}\nto : ${targetUser}`)
+    socket.emit("callOffer", { to: targetUser, from: currentUsername })
   }
 
   return (
@@ -52,14 +62,20 @@ function App() {
 
       <h4>Online Users</h4>
       {onlineUsers.map((username, index) => {
-        return <button
-          key={index}
-          onClick={() => {
-            setSelectedUser(username)
-            console.log("selected user : ", username)
-          }}>
-          {username}
-        </button>
+        return <div key={index}>
+          <span
+            onClick={() => {
+              setSelectedUser(username)
+              console.log("selected user : ", username)
+            }}>
+            {username}
+          </span>
+          <button
+            onClick={() => sendCallOffer(username)}
+          >
+            <IoCall />
+          </button>
+        </div>
       })}
     </div>
   )

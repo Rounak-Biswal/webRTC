@@ -43,6 +43,10 @@ io.on("connection", (socket) => {
         delete joinedUsers[socket.id]
         console.log("user left, click to re-join\njoinedUsers : ", joinedUsers);
     })
+
+    socket.on("callOffer", (obj) => {
+        console.log(`From : ${obj.from}\nto : ${obj.to}`)
+    })
 })
 
 server.listen(port, () => {
