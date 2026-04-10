@@ -21,6 +21,12 @@ const joinedUsers = {}
 io.on("connection", (socket) => {
     console.log('socket connected : ', socket.id);
 
+    socket.on("disconnect", () => {
+        delete joinedUsers[socket.id]
+        console.log("User disconnected\njoinedUsers : ", joinedUsers);
+        io.emit("online-users", joinedUsers)
+    })
+
     socket.on("join", (username) => {
         if (username) {
             console.log(`username associated with current socket : ${username}`);
@@ -29,6 +35,13 @@ io.on("connection", (socket) => {
             socket.emit("success", "user sucessfully joined")
             io.emit("online-users", joinedUsers)
         }
+    })
+
+    socket.on("leave", () => {
+        io.emit("success", `${joinedUsers[socket.id]} left`)
+        io.emit("online-users", joinedUsers)
+        delete joinedUsers[socket.id]
+        console.log("user left, click to re-join\njoinedUsers : ", joinedUsers);
     })
 })
 

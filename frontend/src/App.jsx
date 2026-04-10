@@ -16,9 +16,14 @@ function App() {
       for (let key in userDB) { arr.push(userDB[key]) }
       SetOnlineUsers(arr)
     })
+    socket.on("disconnect", () => {
+      setSelectedUser('')
+      setUsername('')
+    })
     return () => {
       socket.off("success")
       socket.off("online-users")
+      socket.off("disconnect")
     }
   }, [])
 
@@ -28,31 +33,35 @@ function App() {
     socket.emit("join", username)
   }
 
-  return (
-    <>
-      <section id="center">
-        <input
-          type="text"
-          value={username}
-          placeholder='Enter Username'
-          id="usernameInput"
-          onChange={(e) => setUsername(e.target.value)}
-        />
-        <button onClick={joinUser}>Join</button><hr />
+  let leaveUser = () => {
+    socket.emit("leave")
+    setSelectedUser('')
+  }
 
-        <h4>Online Users</h4>
-        {onlineUsers.map((username, index) => {
-          return <button
-            key={index}
-            onClick={() => {
-              setSelectedUser(username)
-              console.log("selected user : ", username)
-            }}>
-            {username}
-          </button>
-        })}
-      </section>
-    </>
+  return (
+    <div>
+      <input
+        type="text"
+        value={username}
+        placeholder='Enter Username'
+        id="usernameInput"
+        onChange={(e) => setUsername(e.target.value)}
+      />
+      <button onClick={joinUser}>Join</button>
+      <button onClick={leaveUser}>Leave</button>
+
+      <h4>Online Users</h4>
+      {onlineUsers.map((username, index) => {
+        return <button
+          key={index}
+          onClick={() => {
+            setSelectedUser(username)
+            console.log("selected user : ", username)
+          }}>
+          {username}
+        </button>
+      })}
+    </div>
   )
 }
 
