@@ -8,6 +8,7 @@ function App() {
   const [currentUsername, setCurrentUsername] = useState('')
   const [onlineUsers, SetOnlineUsers] = useState([])
   const [selectedUser, setSelectedUser] = useState('')
+  const [incomingCall, setIncomingCall] = useState(null)
 
   useEffect(() => {
     socket.on("success", (msg) => {
@@ -23,10 +24,16 @@ function App() {
       setUsername('')
       setCurrentUsername('')
     })
+    socket.on("incomingCall", (callData) => {
+      console.log("incoming call from :", callData.from)
+      setIncomingCall(callData)
+    })
+
     return () => {
       socket.off("success")
       socket.off("online-users")
       socket.off("disconnect")
+      socket.off("incomingCall")
     }
   }, [])
 
@@ -48,8 +55,31 @@ function App() {
     socket.emit("callOffer", { to: targetUser, from: currentUsername })
   }
 
+  let acceptCall = () => {
+    socket.emit("acceptCall",
+      {
+        callSender: incomingCall,
+        callReciever: currentUsername
+
+      })
+      setIncomingCall(null)
+  }
+
   return (
     <div>
+      {incomingCall &&
+        <div id='msgSection'>
+          <p>Incoming call from {incomingCall.from}</p>
+          <button>
+            <IoCall
+              onClick={acceptCall}
+              style={{ color: "green" }} />
+          </button>
+          <button>
+            <IoCall style={{ color: "red" }} />
+          </button>
+        </div>}
+
       <input
         type="text"
         value={username}
