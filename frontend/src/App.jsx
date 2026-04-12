@@ -28,6 +28,9 @@ function App() {
       console.log("incoming call from :", callData.from)
       setIncomingCall(callData)
     })
+    socket.on("callAccepted", (obj) => {
+      console.log(obj.msg)
+    })
 
     return () => {
       socket.off("success")
@@ -62,7 +65,7 @@ function App() {
         callReciever: currentUsername
 
       })
-      setIncomingCall(null)
+    setIncomingCall(null)
   }
 
   return (

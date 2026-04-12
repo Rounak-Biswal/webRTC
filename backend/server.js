@@ -58,6 +58,7 @@ io.on("connection", (socket) => {
 
     socket.on("acceptCall", (obj) => {
         console.log(`${obj.callReciever} accepted call from ${obj.callSender.from}`);
+        io.to(obj.callSender.fromId).emit("callAccepted", { msg: `${obj.callReciever} accepted your call` })
     })
 })
 
