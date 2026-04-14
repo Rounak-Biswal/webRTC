@@ -31,12 +31,17 @@ function App() {
     socket.on("callAccepted", (obj) => {
       console.log(obj.msg)
     })
+    socket.on("callRejected", (obj) => {
+      console.log(obj.msg)
+    })
 
     return () => {
       socket.off("success")
       socket.off("online-users")
       socket.off("disconnect")
       socket.off("incomingCall")
+      socket.off("callAccepted")
+      socket.off("callRejected")
     }
   }, [])
 
@@ -68,6 +73,16 @@ function App() {
     setIncomingCall(null)
   }
 
+  let rejectCall = () => {
+    socket.emit("rejectCall",
+      {
+        callSender: incomingCall,
+        callReciever: currentUsername
+
+      })
+    setIncomingCall(null)
+  }
+
   return (
     <div>
       {incomingCall &&
@@ -79,7 +94,9 @@ function App() {
               style={{ color: "green" }} />
           </button>
           <button>
-            <IoCall style={{ color: "red" }} />
+            <IoCall
+              onClick={rejectCall}
+              style={{ color: "red" }} />
           </button>
         </div>}
 

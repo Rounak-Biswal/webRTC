@@ -28,6 +28,11 @@ io.on("connection", (socket) => {
             console.log("User disconnected\njoinedUsers : ", joinedUsers);
             io.emit("online-users", joinedUsers)
         }
+        Object.keys(activeCalls).forEach((key) => {
+            if (key === socket.id || activeCalls[key] === socket.id) {       //Terminate PeerConnection if caller or callee leaves
+                delete activeCalls[key]
+            }
+        })
     })
 
     socket.on("join", (username) => {
@@ -47,6 +52,11 @@ io.on("connection", (socket) => {
             delete joinedUsers[socket.id]
             console.log("user left, click to re-join\njoinedUsers : ", joinedUsers);
         }
+        Object.keys(activeCalls).forEach((key) => {
+            if (key === socket.id || activeCalls[key] === socket.id) {       //Terminate PeerConnection if caller or callee leaves
+                delete activeCalls[key]
+            }
+        })
     })
 
     socket.on("callOffer", (obj) => {
@@ -55,12 +65,12 @@ io.on("connection", (socket) => {
         if (reciever in joinedUsers && sender in joinedUsers) {
             activeCalls[sender] = reciever
         }
-        console.log(`From : ${obj.from}\nto : ${obj.to}`)
+        console.log(`From : ${joinedUsers[sender]}\nto : ${joinedUsers[reciever]}`)
         console.log(`From : ${sender}\nto : ${reciever}`)
         if (reciever) {
             io.to(reciever).emit("incomingCall",
                 {
-                    from: joinedUsers[socket.id],
+                    from: joinedUsers[sender],
                     fromId: sender
                 })
         }
@@ -73,6 +83,17 @@ io.on("connection", (socket) => {
             console.log(`${joinedUsers[calleeId]} accepted call from ${joinedUsers[callerId]}`);
             io.to(callerId).emit("callAccepted", { msg: `${joinedUsers[calleeId]} accepted your call` })
         }
+        delete activeCalls[callerId]
+    })
+
+    socket.on("rejectCall", (obj) => {
+        let callerId = obj.callSender.fromId
+        let calleeId = Object.keys(joinedUsers).find((key) => joinedUsers[key] === obj.callReciever)
+        if (callerId in activeCalls && activeCalls[callerId] === calleeId) {
+            console.log(`${joinedUsers[calleeId]} rejected call from ${joinedUsers[callerId]}`);
+            io.to(callerId).emit("callRejected", { msg: `${joinedUsers[calleeId]} rejected your call` })
+        }
+        delete activeCalls[callerId]
     })
 })
 
