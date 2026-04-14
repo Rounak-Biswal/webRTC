@@ -17,14 +17,17 @@ const io = new Server(server, {
 app.use(express.json())
 
 const joinedUsers = {}
+const activeCalls = {}
 
 io.on("connection", (socket) => {
     console.log('socket connected : ', socket.id);
 
     socket.on("disconnect", () => {
-        delete joinedUsers[socket.id]
-        console.log("User disconnected\njoinedUsers : ", joinedUsers);
-        io.emit("online-users", joinedUsers)
+        if (joinedUsers[socket.id]) {
+            delete joinedUsers[socket.id]
+            console.log("User disconnected\njoinedUsers : ", joinedUsers);
+            io.emit("online-users", joinedUsers)
+        }
     })
 
     socket.on("join", (username) => {
@@ -38,27 +41,38 @@ io.on("connection", (socket) => {
     })
 
     socket.on("leave", () => {
-        io.emit("success", `${joinedUsers[socket.id]} left`)
-        io.emit("online-users", joinedUsers)
-        delete joinedUsers[socket.id]
-        console.log("user left, click to re-join\njoinedUsers : ", joinedUsers);
+        if (joinedUsers[socket.id]) {
+            io.emit("success", `${joinedUsers[socket.id]} left`)
+            io.emit("online-users", joinedUsers)
+            delete joinedUsers[socket.id]
+            console.log("user left, click to re-join\njoinedUsers : ", joinedUsers);
+        }
     })
 
     socket.on("callOffer", (obj) => {
         let sender = socket.id
         let reciever = Object.keys(joinedUsers).find((key) => joinedUsers[key] === obj.to)
+        if (reciever in joinedUsers && sender in joinedUsers) {
+            activeCalls[sender] = reciever
+        }
         console.log(`From : ${obj.from}\nto : ${obj.to}`)
         console.log(`From : ${sender}\nto : ${reciever}`)
-        io.to(reciever).emit("incomingCall",
-            {
-                from: joinedUsers[socket.id],
-                fromId: sender
-            })
+        if (reciever) {
+            io.to(reciever).emit("incomingCall",
+                {
+                    from: joinedUsers[socket.id],
+                    fromId: sender
+                })
+        }
     })
 
     socket.on("acceptCall", (obj) => {
-        console.log(`${obj.callReciever} accepted call from ${obj.callSender.from}`);
-        io.to(obj.callSender.fromId).emit("callAccepted", { msg: `${obj.callReciever} accepted your call` })
+        let callerId = obj.callSender.fromId
+        let calleeId = Object.keys(joinedUsers).find((key) => joinedUsers[key] === obj.callReciever)
+        if (callerId in activeCalls && activeCalls[callerId] === calleeId) {
+            console.log(`${joinedUsers[calleeId]} accepted call from ${joinedUsers[callerId]}`);
+            io.to(callerId).emit("callAccepted", { msg: `${joinedUsers[calleeId]} accepted your call` })
+        }
     })
 })
 

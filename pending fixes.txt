@@ -1,0 +1,299 @@
+
+Good — this is a clean checkpoint. I’ll go point-by-point, precise.
+
+---
+
+# 1️⃣ Current stage issues
+
+### ✅ What’s solid
+
+* Call flow: **call → incoming → accept → notify caller** ✔️
+* Caller receives `"callAccepted"` ✔️ 
+* Server correctly routes using socketId ✔️ 
+
+---
+
+### ⚠️ Issues / risks
+
+#### (A) No receiver existence check
+
+If username not found:
+
+* `receiver = undefined`
+* `io.to(undefined)` silently fails
+
+👉 Add validation mentally (don’t skip this)
+
+---
+
+#### (B) Trusting frontend too much
+
+You’re using:
+
+```text
+obj.from (frontend)
+obj.to (frontend)
+```
+
+👉 These are **untrusted inputs**
+
+Server already knows:
+
+* `socket.id → username`
+
+So:
+
+> always derive sender from server, not frontend
+
+---
+
+#### (C) Duplicate username problem (important)
+
+Your system allows:
+
+```
+Rounak (socket1)
+Rounak (socket2)
+```
+
+👉 Reverse lookup breaks
+
+---
+
+#### (D) No call state tracking (this will bite soon)
+
+Right now server doesn’t know:
+
+* who is calling whom
+* whether a call is active
+
+👉 This becomes critical in next phase
+
+---
+
+# 2️⃣ Naming improvements (very important now)
+
+Your naming is still **phase-mixed** (UI + WebRTC)
+
+---
+
+## Recommended naming (clean separation)
+
+### 🔹 Call signaling (UI layer)
+
+* `"callOffer"` ❌ (misleading)
+
+* `"call:request"` ✅
+
+* `"incomingCall"` → keep or:
+
+  * `"call:incoming"` ✅
+
+* `"acceptCall"` →
+
+  * `"call:accept"` ✅
+
+* `"callAccepted"` →
+
+  * `"call:accepted"` ✅
+
+---
+
+### 🔹 Future WebRTC (don’t mix yet)
+
+* `"webrtc:offer"`
+* `"webrtc:answer"`
+* `"webrtc:ice"`
+
+---
+
+## Variable naming
+
+* `sender` → `callerSocketId`
+* `receiver` → `calleeSocketId`
+* `obj` → `payload`
+
+---
+
+👉 Rule:
+
+> event names = **what happened**
+> variable names = **what it represents**
+
+---
+
+# 3️⃣ Should server store current call? (VERY good question)
+
+👉 **YES — 100% yes**
+
+You’re thinking correctly.
+
+---
+
+## Why you need it
+
+Right now:
+
+> B accepts → server blindly trusts it
+
+But what if:
+
+* A never called B?
+* malicious client sends fake accept?
+
+👉 Your system breaks
+
+---
+
+## What to store (simple)
+
+Maintain:
+
+```text
+activeCalls = {
+  callerSocketId: calleeSocketId
+}
+```
+
+---
+
+## Flow with validation
+
+### On call request:
+
+* store:
+
+  ```
+  caller → callee
+  ```
+
+---
+
+### On accept:
+
+* verify:
+
+  ```
+  does caller → callee exist?
+  ```
+
+If not:
+❌ reject event
+
+---
+
+## Bonus benefit
+
+Later you can:
+
+* prevent multiple calls
+* handle busy users
+* implement call timeout
+
+---
+
+# 4️⃣ What to do next (very precise)
+
+You are now here:
+
+```
+call → incoming → accept → caller notified
+```
+
+---
+
+## 🎯 Next milestone
+
+👉 **Start WebRTC only AFTER callAccepted**
+
+---
+
+## Step-by-step (no code mindset)
+
+### 1. Caller receives “call:accepted”
+
+→ transition to:
+
+```
+connecting state
+```
+
+---
+
+### 2. BOTH sides prepare
+
+* create peer connection
+* set up listeners (ICE, track)
+
+👉 Do this BEFORE sending offer
+
+---
+
+### 3. Caller:
+
+* get media
+* create offer
+* send `"webrtc:offer"`
+
+---
+
+### 4. Receiver:
+
+* receive offer
+* create answer
+* send `"webrtc:answer"`
+
+---
+
+### 5. Both:
+
+* exchange ICE candidates
+
+---
+
+# 🧠 Critical correction (don’t mess this up)
+
+You might be tempted to:
+
+> create offer immediately on accept click
+
+❌ Wrong
+
+Correct:
+
+```
+accept → server → caller notified → THEN caller creates offer
+```
+
+---
+
+# 🧭 Final assessment
+
+### You are at:
+
+👉 **Pre-WebRTC handshake complete**
+
+### You must now build:
+
+👉 **WebRTC signaling (offer/answer/ice)**
+
+---
+
+# 🔥 One strong recommendation
+
+Before moving ahead:
+
+👉 Add **active call tracking on server**
+
+This will:
+
+* prevent logical bugs
+* make debugging WebRTC MUCH easier
+
+---
+
+When you move to:
+
+> “creating offer”
+
+come back — that’s the most failure-prone step and needs careful sequencing.
