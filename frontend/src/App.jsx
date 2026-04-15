@@ -24,14 +24,14 @@ function App() {
       setUsername('')
       setCurrentUsername('')
     })
-    socket.on("incomingCall", (callData) => {
+    socket.on("call:incoming", (callData) => {
       console.log("incoming call from :", callData.from)
       setIncomingCall(callData)
     })
-    socket.on("callAccepted", (obj) => {
+    socket.on("call:accepted", (obj) => {
       console.log(obj.msg)
     })
-    socket.on("callRejected", (obj) => {
+    socket.on("call:rejected", (obj) => {
       console.log(obj.msg)
     })
 
@@ -39,9 +39,9 @@ function App() {
       socket.off("success")
       socket.off("online-users")
       socket.off("disconnect")
-      socket.off("incomingCall")
-      socket.off("callAccepted")
-      socket.off("callRejected")
+      socket.off("call:incoming")
+      socket.off("call:accepted")
+      socket.off("call:rejected")
     }
   }, [])
 
@@ -60,11 +60,11 @@ function App() {
   let sendCallOffer = (targetUser) => {
     console.log("sendCallOffer triggered")
     console.log(`From : ${currentUsername}\nto : ${targetUser}`)
-    socket.emit("callOffer", { to: targetUser, from: currentUsername })
+    socket.emit("call:request", { to: targetUser, from: currentUsername })
   }
 
   let acceptCall = () => {
-    socket.emit("acceptCall",
+    socket.emit("call:accept",
       {
         callSender: incomingCall,
         callReciever: currentUsername
@@ -74,7 +74,7 @@ function App() {
   }
 
   let rejectCall = () => {
-    socket.emit("rejectCall",
+    socket.emit("call:reject",
       {
         callSender: incomingCall,
         callReciever: currentUsername

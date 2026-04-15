@@ -1,53 +1,5 @@
-
-Good — this is a clean checkpoint. I’ll go point-by-point, precise.
-
----
-
-# 1️⃣ Current stage issues
-
-### ✅ What’s solid
-
-* Call flow: **call → incoming → accept → notify caller** ✔️
-* Caller receives `"callAccepted"` ✔️ 
-* Server correctly routes using socketId ✔️ 
-
----
-
-### ⚠️ Issues / risks
-
-#### (A) No receiver existence check
-
-If username not found:
-
-* `receiver = undefined`
-* `io.to(undefined)` silently fails
-
-👉 Add validation mentally (don’t skip this)
-
----
-
-#### (B) Trusting frontend too much
-
-You’re using:
-
-```text
-obj.from (frontend)
-obj.to (frontend)
-```
-
-👉 These are **untrusted inputs**
-
-Server already knows:
-
-* `socket.id → username`
-
-So:
-
-> always derive sender from server, not frontend
-
----
-
-#### (C) Duplicate username problem (important)
+# 1️⃣ 
+#### (A) Duplicate username problem (important)
 
 Your system allows:
 
@@ -60,16 +12,6 @@ Rounak (socket2)
 
 ---
 
-#### (D) No call state tracking (this will bite soon)
-
-Right now server doesn’t know:
-
-* who is calling whom
-* whether a call is active
-
-👉 This becomes critical in next phase
-
----
 
 # 2️⃣ Naming improvements (very important now)
 
