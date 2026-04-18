@@ -30,6 +30,7 @@ function App() {
     })
     socket.on("call:accepted", (obj) => {
       console.log(obj.msg)
+      const RTC_Conn_Obj = new RTCPeerConnection()
     })
     socket.on("call:rejected", (obj) => {
       console.log(obj.msg)
@@ -68,7 +69,6 @@ function App() {
       {
         callSender: incomingCall,
         callReciever: currentUsername
-
       })
     setIncomingCall(null)
   }
