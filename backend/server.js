@@ -48,8 +48,8 @@ io.on("connection", (socket) => {
     socket.on("leave", () => {
         if (joinedUsers[socket.id]) {
             io.emit("success", `${joinedUsers[socket.id]} left`)
-            io.emit("online-users", joinedUsers)
             delete joinedUsers[socket.id]
+            io.emit("online-users", joinedUsers)
             console.log("user left, click to re-join\njoinedUsers : ", joinedUsers);
         }
         Object.keys(activeCalls).forEach((key) => {
