@@ -1,3 +1,11 @@
-*{
+* {
   margin: 0.2em;
+}
+
+video {
+  width: 300px;
+  height: 200px;
+  background: black;
+  border-radius: 10px;
+  object-fit: cover;
 }

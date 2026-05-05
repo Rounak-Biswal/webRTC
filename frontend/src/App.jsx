@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { socket } from "./utils/socket"
 import { IoCall } from "react-icons/io5";
 import './App.css'
@@ -9,6 +9,8 @@ function App() {
   const [onlineUsers, SetOnlineUsers] = useState([])
   const [selectedUser, setSelectedUser] = useState('')
   const [incomingCall, setIncomingCall] = useState(null)
+  const localVideoRef = useRef(null)
+  const pcRef = useRef(null)
 
   useEffect(() => {
     socket.on("success", (msg) => {
@@ -23,14 +25,21 @@ function App() {
       setSelectedUser('')
       setUsername('')
       setCurrentUsername('')
+
+      localVideoRef.current?.srcObject?.getTracks().forEach(track => track.stop());
     })
     socket.on("call:incoming", (callData) => {
       console.log("incoming call from :", callData.from)
       setIncomingCall(callData)
     })
-    socket.on("call:accepted", (obj) => {
+    socket.on("call:accepted", async (obj) => {
       console.log(obj.msg)
-      const RTC_Conn_Obj = new RTCPeerConnection()
+      pcRef.current = new RTCPeerConnection()
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true, audio: true
+      })
+      localVideoRef.current.srcObject = stream
+
     })
     socket.on("call:rejected", (obj) => {
       console.log(obj.msg)
@@ -56,6 +65,9 @@ function App() {
     socket.emit("leave")
     setSelectedUser('')
     setCurrentUsername('')
+
+
+    localVideoRef.current?.srcObject?.getTracks().forEach(track => track.stop());
   }
 
   let sendCallOffer = (targetUser) => {
@@ -127,6 +139,10 @@ function App() {
           </button>
         </div>
       })}
+
+      <h4>video section</h4>
+      <video id="localVideo" autoPlay muted playsInline ref={localVideoRef} />
+      <video id="remoteVideo" autoPlay playsInline />
     </div>
   )
 }

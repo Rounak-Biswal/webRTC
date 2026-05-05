@@ -1,0 +1,17 @@
+The WebRTC Signaling Roadmap
+
+1. Initialize Media for Both Users: Both the caller and the callee need to set up a new RTCPeerConnection, request camera and microphone permissions (getUserMedia), and attach that stream to their local <video> element.
+
+
+2. Feed the Connection: Once the local stream is active, loop through its audio and video tracks and add them to the RTCPeerConnection so it actually has media to send.
+
+
+3. Create and Send the Offer (Caller): The user initiating the call generates a WebRTC Offer (a technical document describing their media setup). They save this locally and send it over the socket to the callee.
+
+4. Create and Send the Answer (Callee): The receiving user takes that Offer, saves it as their "remote" configuration, generates their own Answer, saves it locally, and sends it back via the socket.
+
+5. Finalize the Handshake (Caller): The caller receives the Answer and saves it as their "remote" configuration. Both sides now know how to talk to each other.
+
+6. Exchange ICE Candidates: While the steps above happen, the browsers will automatically figure out how to route the data over the internet (finding public IP addresses, bypassing firewalls). You must catch these "ICE candidates" and swap them through your sockets.
+
+7. Display the Remote Video: Finally, listen for incoming tracks on the RTCPeerConnection. When the other person's video arrives, attach it to your <video id="remoteVideo"> element.
