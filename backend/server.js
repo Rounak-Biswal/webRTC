@@ -2,6 +2,7 @@ const express = require('express')
 const http = require('http')
 const cors = require('cors')
 const { Server } = require("socket.io")
+const { join } = require('path')
 
 const port = 8100
 const app = express()
@@ -70,7 +71,7 @@ io.on("connection", (socket) => {
         if (reciever) {
             io.to(reciever).emit("call:incoming",
                 {
-                    from: joinedUsers[sender],  
+                    from: joinedUsers[sender],
                     fromId: sender
                 })
         }
@@ -81,7 +82,12 @@ io.on("connection", (socket) => {
         let calleeId = Object.keys(joinedUsers).find((key) => joinedUsers[key] === obj.callReciever)
         if (callerId in activeCalls && activeCalls[callerId] === calleeId) {
             console.log(`${joinedUsers[calleeId]} accepted call from ${joinedUsers[callerId]}`);
-            io.to(callerId).emit("call:accepted", { msg: `${joinedUsers[calleeId]} accepted your call` })
+            io.to(callerId).emit("call:accepted",
+                {
+                    msg: `${joinedUsers[calleeId]} accepted your call`,
+                    sender: obj.callSender.from,
+                    reciever: obj.callReciever
+                })
         }
         delete activeCalls[callerId]
     })
@@ -94,6 +100,27 @@ io.on("connection", (socket) => {
             io.to(callerId).emit("call:rejected", { msg: `${joinedUsers[calleeId]} rejected your call` })
         }
         delete activeCalls[callerId]
+    })
+
+    socket.on("webrtc:offer", (obj) => {
+        const senderID = Object.keys(joinedUsers).find((key) => joinedUsers[key] === obj.from)
+        const recieverID = Object.keys(joinedUsers).find((key) => joinedUsers[key] === obj.to)
+        console.log(`offer recieved from ${obj.from} | ${senderID} to ${obj.to} | ${recieverID}`)
+        io.to(recieverID).emit("webrtc:offer", { offer: obj.offer, from: obj.from, to: obj.to })
+    })
+
+    socket.on("webrtc:answer", (obj) => {
+        const senderID = Object.keys(joinedUsers).find((key) => joinedUsers[key] === obj.from)
+        const recieverID = Object.keys(joinedUsers).find((key) => joinedUsers[key] === obj.to)
+        console.log(`answer recieved from ${obj.from} | ${senderID} to ${obj.to} | ${recieverID}`)
+        io.to(recieverID).emit("webrtc:answer", { answer: obj.answer, from: obj.from, to: obj.to })
+    })
+
+    socket.on("webrtc:sendICE", (obj) => {
+        console.log(`ICE Candidate recieved by server from ${obj.from}...data : \n`, obj.candidate);
+        const senderID = Object.keys(joinedUsers).find((key) => joinedUsers[key] === obj.from)
+        const recieverID = Object.keys(joinedUsers).find((key) => joinedUsers[key] === obj.to)
+        io.to(recieverID).emit("webrtc:recieveICE", { candidate: obj.candidate, sender: obj.from, reciever: obj.to })
     })
 })
 
