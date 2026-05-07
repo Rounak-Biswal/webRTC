@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { socket } from "./utils/socket"
 import { IoCall } from "react-icons/io5";
 import './App.css'
+import webrtcConfig from "./utils/iceServers.js"
 
 function App() {
   const [username, setUsername] = useState('')
@@ -119,7 +120,7 @@ function App() {
   }
 
   let initializeMedia = async (sender, reciever) => {
-    pcRef.current = new RTCPeerConnection()
+    pcRef.current = new RTCPeerConnection(webrtcConfig)
     const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
     localVideoRef.current.srcObject = stream
 
