@@ -119,6 +119,7 @@ function App() {
     setIncomingCall(null)
   }
 
+  
   let initializeMedia = async (sender, reciever) => {
     pcRef.current = new RTCPeerConnection(webrtcConfig)
     const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
